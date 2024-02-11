@@ -39,7 +39,7 @@ bool done_moving = false;
 //Variabe to track last position (previous loop's theta absolute)
 float old_pos = 0;
 
-//Inverse cos can only give angle between 0 and 180,have to account for the negative y half of xy plane using dy indicator and adjusting:
+
 //declare theta_abs (Global theta position based off of the set origin vector <1 0 0>
 float theta_abs;
 
@@ -81,6 +81,7 @@ void loop() {
     // Solve for angle between them
     float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
 
+    //Inverse cos can only give angle between 0 and 180,have to account for the negative y half of xy plane using dy indicator and adjusting:
     if (dy < 1) {
       theta_abs = 360 - theta;
     } else {
