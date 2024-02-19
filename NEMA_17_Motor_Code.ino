@@ -30,9 +30,9 @@ float y0 = 0;
 float z0 = 0;
 
 // Rocket Coordinates
-float xr = 1;
-float yr = 1;
-float zr = 1;
+float xr = -1;
+float yr = -1;
+float zr = 10;
 
 // Original Antenna Orientation Vector
 float xop = 1;
@@ -69,16 +69,26 @@ void setup() {
 
   pinMode(vertical_limit_pin, INPUT);
 
-  while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
+  if (false){
+    while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
     MOTOR2.step(1);
+    }
+    MOTOR2.step(-25);    // Reset to 45° 
   }
-  MOTOR2.step(-25);    // Reset to 45° 
+  
 }
-
+int a=0;
 void loop() {
 
   while (!done_moving) {
+    
+    Serial.println(a);
+    a+=1;
 
+        // Components of Vector That Points at Rocket
+    float dx = xr - x0;
+    float dy = yr - y0;
+    float dz = zr - z0;
 
     //------ PHI CALC ------
     // xz component of original antenna direction
@@ -98,10 +108,7 @@ void loop() {
       vertical_flip_offset = PI;
     }
 
-    // Components of Vector That Points at Rocket
-    float dx = xr - x0;
-    float dy = yr - y0;
-    float dz = zr - z0;
+
 
     //------ THETA CALC ------
     // xy component of original antenna direction
