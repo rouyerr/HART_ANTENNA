@@ -10,12 +10,12 @@
 #define motor1_Pin4 11  // IN4 on NEMA 17 ==> Orange on MOTOR 1
 
 //STEPPER 2: VERTICAL MOTOR
-#define motor2_Pin1 4   // IN1 on NEMA 17 ==> Blue   on MOTOR 2
-#define motor2_Pin2 5   // IN2 on NEMA 17 ==> Pink   on MOTOR 2
-#define motor2_Pin3 6   // IN3 on NEMA 17 ==> Yellow on MOTOR 2
-#define motor2_Pin4 7   // IN4 on NEMA 17 ==> Orange on MOTOR 2
+#define motor2_Pin1 4  // IN1 on NEMA 17 ==> Blue   on MOTOR 2
+#define motor2_Pin2 5  // IN2 on NEMA 17 ==> Pink   on MOTOR 2
+#define motor2_Pin3 6  // IN3 on NEMA 17 ==> Yellow on MOTOR 2
+#define motor2_Pin4 7  // IN4 on NEMA 17 ==> Orange on MOTOR 2
 
-#define vertical_limit_pin 2 // Limit switch for Motor 2
+#define vertical_limit_pin 2  // Limit switch for Motor 2
 
 // Constants for steps per revolution and speed of stepper motors
 #define STEPS_PER_REVOLUTION 200
@@ -32,10 +32,10 @@ struct Point {
 };
 
 Point testPoints[] = {
-  { -1, -1, 10 }, // Point 1
-  {  1,  1,  10 }, // Point 2
-  {  1,  1,  20 }, // Point 3
-  {  1,  -1,  15 }, // Point 3
+  { -1, -1, 10 },  // Point 1
+  { 1, 1, 10 },    // Point 2
+  { 1, 1, 20 },    // Point 3
+  { 1, -1, 15 },   // Point 3
 };
 int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
 
@@ -56,7 +56,7 @@ bool done_moving = false;
 
 //Variabe to track last position (previous loop's theta absolute)
 float old_theta = 0;
-float old_phi = HALF_PI/2;
+float old_phi = HALF_PI / 2;
 
 
 //declare theta_abs (Global theta position based off of the set origin vector <1 0 0>
@@ -76,31 +76,42 @@ Stepper MOTOR2(STEPS_PER_REVOLUTION, motor2_Pin1, motor2_Pin3, motor2_Pin2, moto
 void setup() {
   Serial.begin(9600);
 
+  Serial.println("INITIALIZING");
+
   // Set stepper motor speeds
   MOTOR1.setSpeed(SPEED);
   MOTOR2.setSpeed(SPEED);
 
   pinMode(vertical_limit_pin, INPUT);
 
-  if (false){
-    while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
-    MOTOR2.step(1);
-    }
-    MOTOR2.step(-25);    // Reset to 45° 
+  MOTOR1.step(-200);
+  MOTOR1.step(400);
+  MOTOR1.step(-200);
+
+  while (digitalRead(vertical_limit_pin) == LOW) {  // Find bottom limit
+    MOTOR2.step(-1);
   }
-  
+  MOTOR2.step(25);  // Reset to 45Â°
 }
-int i=0;
+
+
+int i = 0;
 void loop() {
 
   while (i < numberOfPoints) {
-    
+
+    Serial.print("TEST POINT #: ");
+    Serial.println(i + 1);
+
+    Serial.print("Point: ");
+    Serial.println(testPoints[i]);
+
     // Rocket Coordinates
     float xr = testPoints[i].x;
     float yr = testPoints[i].y;
-    loat zr = testPoints[i].z;
+    float zr = testPoints[i].z;
 
-        // Components of Vector That Points at Rocket
+    // Components of Vector That Points at Rocket
     float dx = xr - x0;
     float dy = yr - y0;
     float dz = zr - z0;
@@ -115,6 +126,10 @@ void loop() {
     // Solve for phi
     float phi = acos((xz_op[0] * dxz[0] + xz_op[1] * dxz[1]) / (mag(xz_op) * mag(dxz)));
     float vertical_flip_offset = 0;
+
+    Serial.print("Old Phi: ");
+    Serial.println(phi);
+
     //***90 degree max for vertical motor here:
     if (phi > HALF_PI) {
       phi = PI - phi;
@@ -135,7 +150,7 @@ void loop() {
 
     // Solve for angle between them
     float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
-    
+
     //Inverse cos can only give angle between 0 and 180,have to account for the negative y half of xy plane using dy indicator and adjusting:
     if (dy < 0) {
       theta_abs = TWO_PI - theta;
@@ -147,7 +162,7 @@ void loop() {
     //Theta_dif will be the actual movement angle for the horizontal motor
     float theta_dif = theta_abs - old_theta;
     float phi_dif = phi - old_phi;
-    
+
     if ((abs(theta_dif)) > PI) {
       if (theta_dif < 0) {
         theta_dif = theta_dif + TWO_PI;
@@ -159,7 +174,7 @@ void loop() {
 
     //Update old position for next loop as calculated theta from this loop
     old_theta = theta_abs;
-    olf_phi = phi;
+    old_phi = phi;
 
     Serial.print("Theta ");
     Serial.println(degrees(theta_abs));
@@ -186,6 +201,5 @@ void loop() {
 
     delay(5000);  // Adjust delay as needed
     i++;
-    
   }
 }
