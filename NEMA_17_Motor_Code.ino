@@ -55,7 +55,8 @@ float zop = 0;
 bool done_moving = false;
 
 //Variabe to track last position (previous loop's theta absolute)
-float old_pos = 0;
+float old_theta = 0;
+float old_phi = HALF_PI/2;
 
 
 //declare theta_abs (Global theta position based off of the set origin vector <1 0 0>
@@ -81,14 +82,12 @@ void setup() {
 
   pinMode(vertical_limit_pin, INPUT);
 
-  MOTOR1.step(-200);
-  MOTOR1.step(400);
-  MOTOR1.step(-200);
-  
-  while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
+  if (false){
+    while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
     MOTOR2.step(1);
+    }
+    MOTOR2.step(-25);    // Reset to 45° 
   }
-  MOTOR2.step(-25);    // Reset to 45Â° 
   
 }
 int i=0;
@@ -146,8 +145,9 @@ void loop() {
 
     //OPTIMIZATION FOR THETA (Finds fastest route):
     //Theta_dif will be the actual movement angle for the horizontal motor
-    float theta_dif = theta_abs - old_pos;
-
+    float theta_dif = theta_abs - old_theta;
+    float phi_dif = phi - old_phi;
+    
     if ((abs(theta_dif)) > PI) {
       if (theta_dif < 0) {
         theta_dif = theta_dif + TWO_PI;
@@ -158,11 +158,11 @@ void loop() {
     }
 
     //Update old position for next loop as calculated theta from this loop
-    old_pos = theta_abs;
-
+    old_theta = theta_abs;
+    olf_phi = phi;
 
     Serial.print("Theta ");
-    Serial.println(degrees(theta_dif));
+    Serial.println(degrees(theta_abs));
 
     Serial.print("Phi ");
     Serial.println(degrees(phi));
@@ -173,7 +173,7 @@ void loop() {
     Serial.println(MOTOR1_steps);
 
 
-    int MOTOR2_steps = (phi / TWO_PI * STEPS_PER_REVOLUTION);
+    int MOTOR2_steps = (phi_dif / TWO_PI * STEPS_PER_REVOLUTION);
     Serial.print("Motor 2 (Vertivcal) Steps: ");
     Serial.println(MOTOR2_steps);
 
