@@ -81,12 +81,14 @@ void setup() {
 
   pinMode(vertical_limit_pin, INPUT);
 
-  if (false){
-    while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
+  MOTOR1.step(-200);
+  MOTOR1.step(400);
+  MOTOR1.step(-200);
+  
+  while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
     MOTOR2.step(1);
-    }
-    MOTOR2.step(-25);    // Reset to 45° 
   }
+  MOTOR2.step(-25);    // Reset to 45Â° 
   
 }
 int i=0;
