@@ -24,15 +24,27 @@
 #define TWO_PI 6.283185307179586476925286766559
 #define HALF_PI 1.5707963267948966192313216916398
 
+
+struct Point {
+  float x;
+  float y;
+  float z;
+};
+
+Point testPoints[] = {
+  { -1, -1, 10 }, // Point 1
+  {  1,  1,  10 }, // Point 2
+  {  1,  1,  20 }, // Point 3
+  {  1,  -1,  15 }, // Point 3
+};
+int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
+
 // Original Antenna Location
 float x0 = 0;
 float y0 = 0;
 float z0 = 0;
 
-// Rocket Coordinates
-float xr = -1;
-float yr = -1;
-float zr = 10;
+
 
 // Original Antenna Orientation Vector
 float xop = 1;
@@ -77,13 +89,15 @@ void setup() {
   }
   
 }
-int a=0;
+int i=0;
 void loop() {
 
-  while (!done_moving) {
+  while (i < numberOfPoints) {
     
-    Serial.println(a);
-    a+=1;
+    // Rocket Coordinates
+    float xr = testPoints[i].x;
+    float yr = testPoints[i].y;
+    loat zr = testPoints[i].z;
 
         // Components of Vector That Points at Rocket
     float dx = xr - x0;
@@ -168,9 +182,8 @@ void loop() {
 
 
 
-    delay(1000);  // Adjust delay as needed
-
-    //Run loop once to make things simple for now
-    done_moving = true;
+    delay(5000);  // Adjust delay as needed
+    i++;
+    
   }
 }
