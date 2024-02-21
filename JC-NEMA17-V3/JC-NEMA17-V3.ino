@@ -1,6 +1,26 @@
 #include <Stepper.h>
 #include <math.h>
 
+// Define stepper motor connections
+//STEPPER 1: HORIZONTAL MOTOR
+#define motor_horizontal_Pin1 8
+#define motor_horizontal_Pin2 9
+#define motor_horizontal_Pin3 10
+#define motor_horizontal_Pin4 11
+
+//STEPPER 2: VERTICAL MOTOR
+#define motor_vertical_Pin1 4
+#define motor_vertical_Pin2 5
+#define motor_vertical_Pin3 6
+#define motor_vertical_Pin4 7
+
+#define STEPS_PER_REVOLUTION 200      // Constants for steps per revolution and speed of stepper motors
+#define SPEED 30
+
+// Initialize stepper motors
+Stepper MOTOR_H(STEPS_PER_REVOLUTION, motor_horizontal_Pin1, motor_horizontal_Pin3, motor_horizontal_Pin2, motor_horizontal_Pin4);
+Stepper MOTOR_V(STEPS_PER_REVOLUTION, motor_vertical_Pin1, motor_vertical_Pin3, motor_vertical_Pin2, motor_vertical_Pin4);
+
 #define vertical_limit_pin 2                                            // Limit switch for Vertical Motor 
 #define horizontal_limit_pin 3                                          // Limit switch for Horizontal Motor 
 
@@ -28,11 +48,15 @@ struct Point {                                                          // Defin
     return { x - other.x, y - other.y, z - other.z };
   }
   
-  Point operator*(const float other) const {
+  Point operator*(const float& other) const {
     return { x * other, y * other, z * other };
   }
-  Point operator/(const float other) const {
+  Point operator/(const float& other) const {
     return { x / other, y / other, z / other };
+  }
+
+  String toString() const {
+    return String("(") + String(x) + ", " + String(y) + ", " + String(z) + ")";
   }
 };
 
@@ -45,8 +69,9 @@ struct Point {                                                          // Defin
 
 // int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
 
-Point Antenna_GPS = {0, 0, 0};                                        // Original Antenna GPS Location
-Point Rocket_GPS = {0, 0, 0};                                         // Rocket GPS Loaction
+float Compass_Heading = 190.0;
+Point Antenna_GPS = {5.5, 12.3, 9.75};                                // Original Antenna GPS Location
+Point Rocket_GPS = {7000, 3.0, 12000};                                // Rocket GPS Loaction
 Point Antenna_Direction = {0, 0, 0};                                  // Original Antenna Orientation Vector
 
 void setup() {
@@ -57,9 +82,11 @@ void setup() {
   pinMode(vertical_limit_pin, INPUT);
   pinMode(horizontal_limit_pin, INPUT);
 
-  Antenna_Direction = initialize_motors();                            // Zero Motors and get current orientation of motors
+  Compass_Heading = initialize_compass(Compass_Heading);
+  
+  Antenna_GPS = initialize_GPS(Antenna_GPS);                                     // Get current GPS Coordinated of Antenna
 
-  Antenna_GPS = initialize_GPS();                                     // Get current GPS Coordinated of Antenna
+  Antenna_Direction = initialize_motors(Antenna_Direction);                            // Zero Motors and get current orientation of motors
   
 }
 
@@ -67,12 +94,12 @@ void setup() {
 int i = 0;
 void loop() {
 
-  Rocket_GPS;//=  RECIEVE GPS DATA FROM ROCKET
+  Rocket_GPS = Get_Rocket_GPS(Rocket_GPS);
 
-  Antenna_Direction = Move_to_Coordinates(Antenna_GPS, Rocket_GPS, Antenna_Direction);
+  Antenna_Direction = Aim_Antenna(Antenna_GPS, Rocket_GPS, Antenna_Direction);
 
 
-
+/* Previous Calculation */ {
   // while (i < numberOfPoints) {
 
   //   Serial.print("\nTEST POINT #: ");
@@ -178,4 +205,5 @@ void loop() {
   //   delay(5000);  // Adjust delay as needed
   //   i++;
   // }
+}
 }

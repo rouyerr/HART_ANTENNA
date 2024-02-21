@@ -1,39 +1,36 @@
-// Define stepper motor connections
+#include <Stepper.h>
 
-//STEPPER 1: HORIZONTAL MOTOR
-#define motor_horizontal_Pin1 8       // IN1 on NEMA 17 ==> Blue   on MOTOR 1
-#define motor_horizontal_Pin2 9       // IN2 on NEMA 17 ==> Pink   on MOTOR 1
-#define motor_horizontal_Pin3 10      // IN3 on NEMA 17 ==> Yellow on MOTOR 1
-#define motor_horizontal_Pin4 11      // IN4 on NEMA 17 ==> Orange on MOTOR 1
+Point initialize_motors(Point antenna_direction) {
+  Serial.println("\nINITIALIZING MOTORS");
 
-//STEPPER 2: VERTICAL MOTOR
-#define motor_vertical_Pin1 4         // IN1 on NEMA 17 ==> Blue   on MOTOR 2
-#define motor_vertical_Pin2 5         // IN2 on NEMA 17 ==> Pink   on MOTOR 2
-#define motor_vertical_Pin3 6         // IN3 on NEMA 17 ==> Yellow on MOTOR 2
-#define motor_vertical_Pin4 7         // IN4 on NEMA 17 ==> Orange on MOTOR 2
-
-#define STEPS_PER_REVOLUTION 200      // Constants for steps per revolution and speed of stepper motors
-#define SPEED 30
-
-// Initialize stepper motors
-Stepper MOTOR_H(STEPS_PER_REVOLUTION, motor_horizontal_Pin1, motor_horizontal_Pin3, motor_horizontal_Pin2, motor_horizontal_Pin4);
-Stepper MOTOR_V(STEPS_PER_REVOLUTION, motor_vertical_Pin1, motor_vertical_Pin3, motor_vertical_Pin2, motor_vertical_Pin4);
-
-Point initialize_motors() {
-  MOTOR_H.setSpeed(SPEED);                                      // Set stepper motor speeds
+  MOTOR_H.setSpeed(SPEED);                                                          // Set stepper motor speeds
   MOTOR_V.setSpeed(SPEED);
 
-  while (digitalRead(horizontal_limit_pin) == LOW)              // Find Zero Location of Horizontal Motor
-    MOTOR_H.step(-1);
-  MOTOR_H.step(STEPS_PER_REVOLUTION);                           // Reset Horizontal Motor to Center
+  // while (digitalRead(horizontal_limit_pin) == LOW)                                  // Find Zero Location of Horizontal Motor
+  //   MOTOR_H.step(-1);
+  // MOTOR_H.step(STEPS_PER_REVOLUTION);                                               // Reset Horizontal Motor to Center
 
-  while (digitalRead(vertical_limit_pin) == LOW)                // Find Zero Location of Vertical Motor
-    MOTOR_V.step(-1);
-  MOTOR_V.step(STEPS_PER_REVOLUTION / 8);                       // Reset to 45° above Horizontal
+  // while (digitalRead(vertical_limit_pin) == LOW)                                    // Find Zero Location of Vertical Motor
+  //   MOTOR_V.step(-1);
+  // MOTOR_V.step(STEPS_PER_REVOLUTION / 8);                                           // Reset to 45° above Horizontal
 
-  Point dir_uni_vec = {1, 1, 1};                                // Define Orientation of antenna and Return
-  return dir_uni_vec / sqrt(3);
+  float compass_heading = get_compass_heading();                                    // Example compass heading (east)
+  float lift_angle = 45.0 * PI / 180.0;                                             // 45 degrees converted to radians
+
+  antenna_direction = Compass_Lift_to_Unit_Vector(compass_heading, lift_angle);     // Define Orientation of antenna and Return as Unit Vector
+
+  Serial.print("Antenna Direction: ");
+  Serial.println(antenna_direction.toString());
+  return antenna_direction;
 }
 
-// USE COMPASS DATA TO DEFINE ORIENTATION UNIT VECTOR
+Point Compass_Lift_to_Unit_Vector(float compass_heading, float lift_angle) {
+  float azimuth_angle = compass_heading * PI / 180.0;                               // Convert compass heading to azimuth angle in radians
+
+  float x = sin(azimuth_angle) * cos(lift_angle);                                   // Convert azimuth angle and lift angle to Cartesian coordinates
+  float y = cos(azimuth_angle) * cos(lift_angle);
+  float z = sin(lift_angle);
+
+  return {x, y, z};                                                                 // Return the unit vector
+}
 
