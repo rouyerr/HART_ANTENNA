@@ -37,9 +37,9 @@ struct Point {
 
 Point testPoints[] = {
   { -1, -1, 10 },  // Point 1
-  { 1, 1, 10 },    // Point 2
+  { 1, -1, 10 },    // Point 2
   { 1, 1, 20 },    // Point 3
-  { 1, -1, 15 },   // Point 3
+  { 1, -1, 15 },   // Point 4
 };
 int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
 
