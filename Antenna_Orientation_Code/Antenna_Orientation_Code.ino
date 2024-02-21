@@ -1,22 +1,25 @@
 #include <Stepper.h>
 
-//STEPPER 1: HORIZONTAL MOTOR
-//STEPPER 2: VERTICAL MOTOR
 
 // Define stepper motor connections
-#define motor1_Pin1 8   // IN1 on ULN2003_1 ==> Blue   on MOTOR 1
-#define motor1_Pin2 9   // IN2 on ULN2004_1 ==> Pink   on MOTOR 1
-#define motor1_Pin3 10  // IN3 on ULN2003_1 ==> Yellow on MOTOR 1
-#define motor1_Pin4 11  // IN4 on ULN2003_1 ==> Orange on MOTOR 1
 
-#define motor2_Pin1 4  // IN1 on ULN2003_2 ==> Blue   on MOTOR 2
-#define motor2_Pin2 5  // IN2 on ULN2004_2 ==> Pink   on MOTOR 2
-#define motor2_Pin3 6  // IN3 on ULN2003_2 ==> Yellow on MOTOR 2
-#define motor2_Pin4 7  // IN4 on ULN2003_2 ==> Orange on MOTOR 2
+//STEPPER 1: HORIZONTAL MOTOR
+#define motor1_Pin1 8   // IN1 on NEMA 17 ==> Blue   on MOTOR 1
+#define motor1_Pin2 9   // IN2 on NEMA 17 ==> Pink   on MOTOR 1
+#define motor1_Pin3 10  // IN3 on NEMA 17 ==> Yellow on MOTOR 1
+#define motor1_Pin4 11  // IN4 on NEMA 17 ==> Orange on MOTOR 1
+
+//STEPPER 2: VERTICAL MOTOR
+#define motor2_Pin1 4   // IN1 on NEMA 17 ==> Blue   on MOTOR 2
+#define motor2_Pin2 5   // IN2 on NEMA 17 ==> Pink   on MOTOR 2
+#define motor2_Pin3 6   // IN3 on NEMA 17 ==> Yellow on MOTOR 2
+#define motor2_Pin4 7   // IN4 on NEMA 17 ==> Orange on MOTOR 2
+
+#define vertical_limit_pin 2 // Limit switch for Motor 2
 
 // Constants for steps per revolution and speed of stepper motors
-#define STEPS_PER_REVOLUTION 2048
-#define SPEED 100
+#define STEPS_PER_REVOLUTION 200
+#define SPEED 50
 
 // Original Antenna Location
 float x0 = 0;
@@ -60,6 +63,13 @@ void setup() {
   // Set stepper motor speeds
   MOTOR1.setSpeed(SPEED);
   MOTOR2.setSpeed(SPEED);
+
+  pinMode(vertical_limit_pin, INPUT);
+
+  while (digitalRead(vertical_limit_pin) == LOW){ // Find bottom limit 
+    MOTOR2.step(1);
+  }
+  MOTOR2.step(-25);    // Reset to 45° 
 }
 
 void loop() {
@@ -119,24 +129,24 @@ void loop() {
     phi = degrees(phi);
 
     Serial.print("Theta ");
-    Serial.print(theta_dif);
+    Serial.println(theta_dif);
 
     //***90 degree max for vertical motor here:
     if (phi > 90) {
       phi = 180 - phi;
       Serial.print("Phi (V2): ");
-      Serial.print(phi);
+      Serial.println(phi);
     }
 
     //Convert angle to motor step instruction
     int MOTOR1_steps = (theta_dif / 360 * STEPS_PER_REVOLUTION);
-    Serial.print("Motor 1 Steps");
-    Serial.print(MOTOR1_steps);
+    Serial.print("Motor 1 (Horizontal) Steps: ");
+    Serial.println(MOTOR1_steps);
 
 
     int MOTOR2_steps = (phi / 360 * STEPS_PER_REVOLUTION);
-    Serial.print("MOTOR 2 steps");
-    Serial.print(MOTOR2_steps);
+    Serial.print("Motor 2 (Vertivcal) Steps: ");
+    Serial.println(MOTOR2_steps);
 
 
     // Move stepper motors based on calculated angles
