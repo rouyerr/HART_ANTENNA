@@ -74,10 +74,10 @@ struct Point {                                                          // Defin
 };
 
 Point testPoints[] = {
-  {100, 100, 100},   // Point 1
-  {100, 100, 200},   // Point 2
-  {100, 100, 300},   // Point 3
-  {100, 100, 400},   // Point 4
+  {100, 100, 10},   // Point 1
+  {100, 100, 20},   // Point 2
+  {100, 100, 30},   // Point 3
+  {100, 100, 40},   // Point 4
 };
 
 // int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
