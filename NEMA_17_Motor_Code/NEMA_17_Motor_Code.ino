@@ -19,7 +19,7 @@
 
 // Constants for steps per revolution and speed of stepper motors
 #define STEPS_PER_REVOLUTION 200
-#define SPEED 50
+#define SPEED 30
 #define PI 3.1415926535897932384626433832795
 #define TWO_PI 6.283185307179586476925286766559
 #define HALF_PI 1.5707963267948966192313216916398
@@ -29,6 +29,10 @@ struct Point {
   float x;
   float y;
   float z;
+
+  String toString() const {
+    return String("(") + String(x) + ", " + String(y) + ", " + String(z) + ")";
+  }
 };
 
 Point testPoints[] = {
@@ -84,14 +88,14 @@ void setup() {
 
   pinMode(vertical_limit_pin, INPUT);
 
-  MOTOR1.step(-200);
-  MOTOR1.step(400);
-  MOTOR1.step(-200);
+//   MOTOR1.step(-200);
+//   MOTOR1.step(400);
+//   MOTOR1.step(-200);
 
-  while (digitalRead(vertical_limit_pin) == LOW) {  // Find bottom limit
-    MOTOR2.step(-1);
-  }
-  MOTOR2.step(25);  // Reset to 45°
+//   while (digitalRead(vertical_limit_pin) == LOW) {  // Find bottom limit
+//     MOTOR2.step(-1);
+//   }
+//   MOTOR2.step(25);  // Reset to 45°
 }
 
 
@@ -104,7 +108,7 @@ void loop() {
     Serial.println(i + 1);
 
     Serial.print("Point: ");
-    Serial.println(testPoints[i]);
+    Serial.println(testPoints[i].toString());
 
     // Rocket Coordinates
     float xr = testPoints[i].x;
@@ -199,7 +203,7 @@ void loop() {
 
 
 
-    delay(5000);  // Adjust delay as needed
+    delay(2000);  // Adjust delay as needed
     i++;
   }
 }
