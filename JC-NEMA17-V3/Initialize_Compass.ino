@@ -9,7 +9,7 @@ float initialize_compass(float compass_heading) {
 
 float get_compass_heading() {
 
-  float compass_heading = 190.0;
+  float compass_heading = 0.0;
 
   Serial.print("Compass Heading: ");
   Serial.println(compass_heading);

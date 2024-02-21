@@ -55,29 +55,43 @@ struct Point {                                                          // Defin
     return { x / other, y / other, z / other };
   }
 
+  float dot(const Point& other) const {                               // Dot product of two points
+    return x * other.x + y * other.y + z * other.z;
+  }
+  Point cross(const Point& other) const {                             // Cross product of two points
+    return {y * other.z - z * other.y,
+            z * other.x - x * other.z,
+            x * other.y - y * other.x};
+  }
+  Point unit() const {
+    float magnitude = sqrt(x * x + y * y + z * z);
+    return {x / magnitude, y / magnitude, z / magnitude};
+  }
+
   String toString() const {
     return String("(") + String(x) + ", " + String(y) + ", " + String(z) + ")";
   }
 };
 
-// Point testPoints[] = {
-//   { -1, -1, 10 },  // Point 1
-//   { 1, 1, 10 },    // Point 2
-//   { 1, 1, 20 },    // Point 3
-//   { 1, -1, 15 },   // Point 3
-// };
+Point testPoints[] = {
+  {100, 100, 100},   // Point 1
+  {100, 100, 200},   // Point 2
+  {100, 100, 300},   // Point 3
+  {100, 100, 400},   // Point 4
+};
 
 // int numberOfPoints = sizeof(testPoints) / sizeof(testPoints[0]);
 
-float Compass_Heading = 190.0;
-Point Antenna_GPS = {5.5, 12.3, 9.75};                                // Original Antenna GPS Location
-Point Rocket_GPS = {7000, 3.0, 12000};                                // Rocket GPS Loaction
-Point Antenna_Direction = {0, 0, 0};                                  // Original Antenna Orientation Vector
+float Compass_Heading = 0.0;
+Point Antenna_GPS = {0.0, 0.0, 0.0};                                // Original Antenna GPS Location
+Point Rocket_GPS = {100, 100, 0.0};                                // Rocket GPS Loaction
+Point Antenna_Direction = {0, 1, 0};                                  // Original Antenna Orientation Vector
 
 void setup() {
   Serial.begin(9600);
+  delay(500);
 
-  Serial.println("INITIALIZING");
+  Serial.println("\n\n-------------------------------------------------------------------------------------------------\nINITIALIZING");
 
   pinMode(vertical_limit_pin, INPUT);
   pinMode(horizontal_limit_pin, INPUT);
@@ -94,9 +108,16 @@ void setup() {
 int i = 0;
 void loop() {
 
-  Rocket_GPS = Get_Rocket_GPS(Rocket_GPS);
+  Rocket_GPS = Get_Rocket_GPS(testPoints[i]);
 
   Antenna_Direction = Aim_Antenna(Antenna_GPS, Rocket_GPS, Antenna_Direction);
+
+  if(i < 3){
+    i++;
+    delay(2000);
+  } else {
+    while(1);
+  }
 
 
 /* Previous Calculation */ {

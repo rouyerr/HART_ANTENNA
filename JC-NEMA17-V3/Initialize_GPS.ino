@@ -1,8 +1,8 @@
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 
-static const int RXPin = 3;                                                                     // Define GPS Module connections
-static const int TXPin = 4; 
+static const int RXPin = 33;                                                                    // Define GPS Module connections
+static const int TXPin = 32; 
 static const uint32_t GPSBaud = 9600;                                                           // Define GPS baud rate
 
 TinyGPSPlus gps;                                                                                // Define GPS Module object
@@ -16,7 +16,7 @@ Point initialize_GPS(Point antenna_gps) {
 
   Serial.print("Connecting to GPS satellites, please wait."); 
   int i = 0;
-  while (!ss.available() && i++ <= 15) {                                                        // Check if able to connect to GPS
+  while (!ss.available() && i++ <= 30) {                                                        // Check if able to connect to GPS
     delay(100);
     Serial.print(".");
   }

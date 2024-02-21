@@ -5,11 +5,7 @@ Point Aim_Antenna(Point& antenna_gps, Point& rocket_gps, Point& antenna_directio
   Serial.print("Difference Vector: ");
   Serial.println(diff_vector.toString());
 
-  float vector_magnitude = sqrt((diff_vector.x * diff_vector.x) + (diff_vector.y * diff_vector.y) + (diff_vector.z * diff_vector.z));       // Calculate Magnitude of the difference vector
-  Serial.print("Difference Vector Magnitude: ");
-  Serial.println(vector_magnitude);
-
-  Point unit_vector = diff_vector / vector_magnitude;                                                                                       // Calculate a unit vector for the path from the Antenna to the Rocket
+  Point unit_vector = diff_vector.unit();                                                                                       // Calculate a unit vector for the path from the Antenna to the Rocket
   Serial.print("Target Unit Vector: ");
   Serial.println(unit_vector.toString());
 
@@ -29,7 +25,7 @@ void Point_Antenna(Point& antenna_direction, const Point& unit_vector) {
 
   // Convert elevation angle to motor steps for Motor_V (vertical motor)
   int MOTOR_V_steps = (theta_elevation / PI * STEPS_PER_REVOLUTION);
-  Serial.print("Vertical Motor= Steps: ");
+  Serial.print("Vertical Steps: ");
   Serial.println(MOTOR_V_steps);
 
   // Calculate the azimuth angle between the current antenna direction and the target unit vector
@@ -45,7 +41,7 @@ void Point_Antenna(Point& antenna_direction, const Point& unit_vector) {
 
   // Convert azimuth angle to motor steps for Motor_H (horizontal motor)
   int MOTOR_H_steps = (theta_azimuth / TWO_PI * STEPS_PER_REVOLUTION);
-  Serial.print("Horizontal Motor Steps: ");
+  Serial.print("Horizontal Steps: ");
   Serial.println(MOTOR_H_steps);
 
   // Move stepper motors to point the antenna in the new direction
