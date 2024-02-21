@@ -5,22 +5,25 @@ Point Aim_Antenna(Point& antenna_gps, Point& rocket_gps, Point& antenna_directio
   Serial.print("Difference Vector: ");
   Serial.println(diff_vector.toString());
 
-  Point unit_vector = diff_vector.unit();                                                                                       // Calculate a unit vector for the path from the Antenna to the Rocket
-  Serial.print("Target Unit Vector: ");
-  Serial.println(unit_vector.toString());
+  Point target_direction = diff_vector.unit();                                                                                       // Calculate a unit vector for the path from the Antenna to the Rocket
+  Serial.print("Target Direction Unit Vector: ");
+  Serial.println(target_direction.toString());
 
-  Point_Antenna(antenna_direction, unit_vector);
+  Serial.print("Antenna Direction Unit Vector: ");
+  Serial.println(antenna_direction.toString());
 
-  return unit_vector;                                                                                                                       // Return the new direction of the antenna
+  Point_Antenna(antenna_direction, target_direction);
+
+  return target_direction;                                                                                                                       // Return the new direction of the antenna
 
 }
 
-void Point_Antenna(Point& antenna_direction, const Point& unit_vector) {
+void Point_Antenna(Point& from_direction, const Point& to_direction) {
   Serial.println("\nPOINTING ANTENNA");
 
   // Calculate the elevation angle (lift angle) between the current antenna direction and the target unit vector
-  float dot_product_elevation = antenna_direction.x * unit_vector.x + antenna_direction.y * unit_vector.y;
-  float cos_theta_elevation = dot_product_elevation / (sqrt(antenna_direction.x * antenna_direction.x + antenna_direction.y * antenna_direction.y) * sqrt(unit_vector.x * unit_vector.x + unit_vector.y * unit_vector.y));
+  float dot_product_elevation = from_direction.x * to_direction.x + from_direction.y * to_direction.y;
+  float cos_theta_elevation = dot_product_elevation / (sqrt(from_direction.x * from_direction.x + from_direction.y * from_direction.y) * sqrt(to_direction.x * to_direction.x + to_direction.y * to_direction.y));
   float theta_elevation = acos(cos_theta_elevation);
 
   // Convert elevation angle to motor steps for Motor_V (vertical motor)
@@ -29,9 +32,9 @@ void Point_Antenna(Point& antenna_direction, const Point& unit_vector) {
   Serial.println(MOTOR_V_steps);
 
   // Calculate the azimuth angle between the current antenna direction and the target unit vector
-  float cross_product_azimuth = antenna_direction.x * unit_vector.y - antenna_direction.y * unit_vector.x;
-  float sin_theta_azimuth = cross_product_azimuth / (sqrt(antenna_direction.x * antenna_direction.x + antenna_direction.y * antenna_direction.y) * sqrt(unit_vector.x * unit_vector.x + unit_vector.y * unit_vector.y));
-  float cos_theta_azimuth = dot_product_elevation / (sqrt(antenna_direction.x * antenna_direction.x + antenna_direction.y * antenna_direction.y) * sqrt(unit_vector.x * unit_vector.x + unit_vector.y * unit_vector.y));
+  float cross_product_azimuth = from_direction.x * to_direction.y - from_direction.y * to_direction.x;
+  float sin_theta_azimuth = cross_product_azimuth / (sqrt(from_direction.x * from_direction.x + from_direction.y * from_direction.y) * sqrt(to_direction.x * to_direction.x + to_direction.y * to_direction.y));
+  float cos_theta_azimuth = dot_product_elevation / (sqrt(from_direction.x * from_direction.x + from_direction.y * from_direction.y) * sqrt(to_direction.x * to_direction.x + to_direction.y * to_direction.y));
   float theta_azimuth = acos(cos_theta_azimuth);
 
   // Determine the sign of the azimuth angle based on the sign of the cross product
