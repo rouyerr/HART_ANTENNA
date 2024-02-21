@@ -34,3 +34,6 @@ Point initialize_motors() {
   Point dir_uni_vec = {1, 1, 1};                                // Define Orientation of antenna and Return
   return dir_uni_vec / sqrt(3);
 }
+
+// USE COMPASS DATA TO DEFINE ORIENTATION UNIT VECTOR
+
