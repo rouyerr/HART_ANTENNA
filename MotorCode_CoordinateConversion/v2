@@ -1,0 +1,76 @@
+void loop() {
+ 
+    // Rocket Coordinates - Here we switch dy and dx to align with longitude (east) and latitude (north) correctly
+    float dy = north; // This now corresponds to latitude changes
+    float dx = east;  // This now corresponds to longitude changes
+    float zr = up;
+    
+    // Components of Vector That Points at Rocket
+    float dx = xr - x0;
+    float dy = yr - y0;
+    float dz = zr - z0;
+    
+    //------ PHI CALC ------
+    // xz component of original antenna direction
+    float xz_op[] = { xop, zop };
+    // xz component of required pointing vector
+    float dxz[] = { dx, dz };
+    
+    // Solve for phi
+    float phi = acos((xz_op[0] * dxz[0] + xz_op[1] * dxz[1]) / (mag(xz_op) * mag(dxz)));
+    float vertical_flip_offset = 0;
+    Serial.print("Old Phi: ");
+    Serial.println(phi);
+    
+    //------ THETA CALC ------
+    // xy component of original antenna direction
+    float xy_op[] = { xop, yop };
+    // xy component of required pointing vector
+    float dxy[] = { dx, dy };
+    // Solve for angle between them
+    float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
+    // Inverse cos can only give angle between 0 and 180, have to account for the negative y half of xy plane using dy indicator and adjusting:
+    if (dy < 0) {
+      theta_abs = TWO_PI - theta;
+    } else {
+      theta_abs = theta;
+    }
+    
+    // OPTIMIZATION FOR THETA (Finds fastest route):
+    // Theta_dif will be the actual movement angle for the horizontal motor
+    float theta_dif = theta_abs - old_theta;
+    float phi_dif = phi - old_phi;
+    
+    if ((abs(theta_dif)) > PI) {
+      if (theta_dif < 0) {
+        theta_dif = theta_dif + TWO_PI;
+      } else {
+        theta_dif = theta_dif - TWO_PI;
+      }
+    }
+
+    // Add in vertical offset
+    theta_dif = theta_dif + vertical_flip_offset;
+    
+    // Update old position for next loop as calculated theta from this loop
+    old_theta = theta_abs;
+    old_phi = phi;
+    Serial.print("Theta ");
+    Serial.println(degrees(theta_abs));
+    Serial.print("Phi ");
+    Serial.println(degrees(phi));
+    
+    // Convert angle to motor step instruction
+    int MOTOR1_steps = (theta_dif / TWO_PI * STEPS_PER_REVOLUTION);
+    Serial.print("Motor 1 (Horizontal) Steps: ");
+    Serial.println(MOTOR1_steps);
+    int MOTOR2_steps = (phi_dif / TWO_PI * STEPS_PER_REVOLUTION);
+    Serial.print("Motor 2 (Vertical) Steps: ");
+    Serial.println(MOTOR2_steps);
+    
+    // Move stepper motors based on calculated angles
+    MOTOR1.step(MOTOR1_steps);
+    MOTOR2.step(MOTOR2_steps);
+    delay(2000);  // Adjust delay as needed
+    
+}
