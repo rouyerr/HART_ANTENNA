@@ -1,6 +1,3 @@
-void setup() {
-  Serial.begin(9600);
-}
 
 Point Get_Rocket_GPS(Point rocket_gps) {
   Serial.println("\nGETTING ROCKET GPS");
