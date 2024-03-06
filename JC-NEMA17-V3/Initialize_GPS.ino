@@ -26,14 +26,16 @@ Point initialize_GPS(Point antenna_gps) {
     Serial.println("Unable to Connect to GPS Satellites.");
   } else {
     while (antenna_gps.x == 0.0) {
-      gps.encode(ss.read());  // Read data from GPS
+      while (ss.available() > 0) {
+        if (gps.encode(ss.read())) {  // Read data from GPS
+          Serial.print("Successfully Connected to ");
+          Serial.print(gps.satellites.value());
+          Serial.println(" Satellites.");
 
-      Serial.print("Successfully Connected to ");
-      Serial.print(gps.satellites.value());
-      Serial.println(" Satellites.");
-
-      antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.feet() };  // Store Antenna GPS location and return
-    };
+          antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.feet() };  // Store Antenna GPS location and return
+        }
+      }
+    }
   }
 
   Serial.print("Antenna GPS: ");
