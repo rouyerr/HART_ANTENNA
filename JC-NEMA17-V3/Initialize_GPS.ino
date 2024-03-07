@@ -32,7 +32,7 @@ Point initialize_GPS(Point antenna_gps) {
           Serial.print(gps.satellites.value());
           Serial.println(" Satellites.");
 
-          antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.feet() };  // Store Antenna GPS location and return
+          antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
         }
       }
     }

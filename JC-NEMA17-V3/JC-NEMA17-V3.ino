@@ -26,6 +26,7 @@ Stepper MOTOR_V(STEPS_PER_REVOLUTION, motor_vertical_Pin1, motor_vertical_Pin3, 
 
 #define TWO_PI PI * 2   // Math Definition 2Pi
 #define HALF_PI PI / 2  // Math Definition Pi/2
+#define RAD_EARTH 6371000 // in meters 
 
 struct Point {  // Define 3-Dimensional Point Variable and necessary operators
   float x;
@@ -73,11 +74,8 @@ struct Point {  // Define 3-Dimensional Point Variable and necessary operators
   }
 
   String toString() const {
-    return String("(") + String(x) + ", " + String(y) + ", " + String(z) + ")";
-  }
 
-  Point lla_to_xyz() const { //Convert Gps Coordinated to XYZ coordinates relative to Antenna Location
-    return {0, 0, 0};
+    return String("(") + String(x, 6) + ", " + String(y, 6) + ", " + String(z, 6) + ")";
   }
 };
 
