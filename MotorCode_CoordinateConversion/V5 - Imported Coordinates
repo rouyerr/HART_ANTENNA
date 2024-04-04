@@ -76,9 +76,6 @@ float mag(float vector[]) {
   return sqrt(pow(vector[0], 2) + pow(vector[1], 2));
 }
 
-//-------One rotation variable---------
-boolean onerot = true;
-
 // Initialize stepper motors
 Stepper MOTOR1(STEPS_PER_REVOLUTION, motor1_Pin1, motor1_Pin3, motor1_Pin2, motor1_Pin4);
 Stepper MOTOR2(STEPS_PER_REVOLUTION, motor2_Pin1, motor2_Pin3, motor2_Pin2, motor2_Pin4);
@@ -102,7 +99,6 @@ void setup() {
 }
 
 void loop() {
-while (onerot) {
  llaToEnu(lat_test, lon_test, alt_test, east, north, up);
  Serial.print("East" );
  Serial.print(east);
@@ -212,5 +208,4 @@ while (onerot) {
     delay(2000);  // Adjust delay as needed
     onerot = false;
     }
-}
   }
