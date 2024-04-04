@@ -1,17 +1,17 @@
 #include <Stepper.h>
 
 //Example for now, but this will be GPS location of antenna
-float ref_lat = 44.56780; 
-float ref_lon = 123.27506; 
+float ref_lat = 44.56777; 
+float ref_lon = 123.27502; 
 float ref_alt = 0;
 
 #define DEG_TO_RAD 0.017453292519943295769236907684886
 #define EARTH_RADIUS 6371000 // in meters 
 
 //Will be read-in rocket coordinates, just test for now
-float lat_test = 44.56703; // Example latitude for testing
-float lon_test = 123.31451; // Example longitude for testing
-float alt_test = 1000; // Example altitude for testing
+float lat_test = 44.56849; // Example latitude for testing
+float lon_test = 123.275; // Example longitude for testing
+float alt_test = 300; // Example altitude for testing
 
 void llaToEnu(float lat, float lon, float alt, float& east, float& north, float& up) {
     float delta_lat = lat - ref_lat;
@@ -52,7 +52,7 @@ float east, north, up;
 //PHI_MIN CHANGE 1:
 //Define desired starting phi offset (in degrees)
 float offset = 45;
-phi_i_offset = offset*DEG_TO_RAD;
+float phi_i_offset = offset*DEG_TO_RAD;
 //Introduce boolean 'above45yet' to track
 boolean above45yet = 0;
 
@@ -138,11 +138,11 @@ while (onerot) {
     //PHI_MIN CHANGE 4: If conditions
     //Only continue once dz > zmin (Rocket above 45 deg angle)
     if (dz > z_min) {
-      above45yet = 1
+      above45yet = 1;
     }
     //Put everything left in 'if' statement>>>
     if (above45yet == 1) {
-    serial.println('Above 45')
+    Serial.println('Above 45');
     //Now start actual rocket tracking code:
 
     
