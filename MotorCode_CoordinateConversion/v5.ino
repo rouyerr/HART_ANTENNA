@@ -159,15 +159,10 @@ if (Serial.available() > 0) {
      Serial.print("up");
      Serial.print(up);
  
-        // Rocket Coordinates
-        float yr = north;
-        float xr = east;
-        float zr = up;
-    
-        // Components of Vector That Points at Rocket
-        float dx = xr;
-        float dy = yr;
-        float dz = zr;
+        // Components of Vector That Points at Rocket coordinate
+        float dx = north;
+        float dy = east;
+        float dz = up;
 
         //------ THETA CALC ------
     
@@ -260,7 +255,7 @@ if (Serial.available() > 0) {
        stepper1.runToPosition();
        stepper2.moveTo(MOTOR2_steps);
        stepper2.runToPosition();
-`      delay(2000);  // Adjust delay as needed
+`      delay(1000);  // Adjust delay as needed
         }
 
           // Reset incomingData for the next message
