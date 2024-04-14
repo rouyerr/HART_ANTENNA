@@ -1,4 +1,12 @@
-#include <Stepper.h>
+#include <AccelStepper.h>
+#define dirPin1 6
+#define stepPin1 7
+#define dirPin2 8
+#define stepPin2 9
+#define interface 1
+
+AccelStepper stepper1=AccelStepper(interface,stepPin1,dirPin1);
+AccelStepper stepper2=AccelStepper(interface,stepPin2,dirPin2);
 
 //Example for now, but this will be GPS location of antenna
 float ref_lat = 44.56777; 
@@ -87,16 +95,13 @@ void setup() {
   Serial.begin(9600);
   Serial.println("INITIALIZING");
   // Set stepper motor speeds
-  MOTOR1.setSpeed(SPEED);
-  MOTOR2.setSpeed(SPEED);
+  stepper1.setSpeed(500);
+  stepper1.setMaxSpeed(20000); //20000 steps/second max
+  stepper1.setAcceleration(50000); 
+  stepper2.setSpeed(500);
+  stepper2.setMaxSpeed(20000); //20000 steps/second max
+  stepper2.setAcceleration(50000); 
   
-  pinMode(vertical_limit_pin, INPUT);
-//   MOTOR1.step(-200);
-//   MOTOR1.step(400);
-//   MOTOR1.step(-200);
-//   while (digitalRead(vertical_limit_pin) == LOW) {  // Find bottom limit
-//     MOTOR2.step(-1);
-//   }
   //PHI_MIN CHANGE 3: Set at 45 initially
   MOTOR2.step(25);  // Reset to 45°
 }
@@ -207,9 +212,11 @@ while (onerot) {
     Serial.println(MOTOR2_steps);
     
     // Move stepper motors based on calculated angles
-    MOTOR1.step(MOTOR1_steps);
-    MOTOR2.step(MOTOR2_steps);
-    delay(2000);  // Adjust delay as needed
+       stepper1.moveTo(MOTOR1_steps);
+       stepper1.runToPosition();
+       stepper2.moveTo(MOTOR2_steps);
+       stepper2.runToPosition();
+`      delay(1000);  // Adjust delay as needed
     onerot = false;
     }
 }
