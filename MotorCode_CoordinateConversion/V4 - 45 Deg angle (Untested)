@@ -216,7 +216,7 @@ while (onerot) {
        stepper1.runToPosition();
        stepper2.moveTo(MOTOR2_steps);
        stepper2.runToPosition();
-`      delay(1000);  // Adjust delay as needed
+       delay(1000);  // Adjust delay as needed
     onerot = false;
     }
 }
