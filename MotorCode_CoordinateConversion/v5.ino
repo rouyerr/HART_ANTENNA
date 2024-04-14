@@ -1,18 +1,67 @@
-#include <Stepper.h>
+#include <AccelStepper.h>
+#include <TinyGPSPlus.h>
+#include <SoftwareSerial.h>
+#define dirPin1 6
+#define stepPin1 7
+#define dirPin2 8
+#define stepPin2 9
+#define interface 1
 
-//Example for now, but this will be GPS location of antenna
-float ref_lat = 44.56777; 
-float ref_lon = 123.27502; 
-float ref_alt = 0;
+AccelStepper stepper1=AccelStepper(interface,stepPin1,dirPin1);
+AccelStepper stepper2=AccelStepper(interface,stepPin2,dirPin2);
+
+//GPS initialization 
+static const int RXPin = 12;  // Define GPS Module connections
+static const int TXPin = 13;
+static const uint32_t GPSBaud = 9600;  // Define GPS baud rate
+
+TinyGPSPlus gps;  // Define GPS Module object
+
+SoftwareSerial ss(RXPin, TXPin);  // Define connection to GPS Module
+
+Point initialize_GPS(Point antenna_gps) {
+  Serial.println("\nINITIALIZING GPS");
+
+  ss.begin(9600);
+
+  Serial.print("Connecting to GPS satellites, please wait.");
+  int i = 0;
+  while (!ss.available() && i++ <= 30) {  // Check if able to connect to GPS
+    delay(100);
+    Serial.print(".");
+  }
+  Serial.print(".");
+  Serial.println(i);
+  if (i >= 25) {
+    Serial.println("Unable to Connect to GPS Satellites.");
+  } else {
+    while (antenna_gps.x == 0.0) {
+      while (ss.available() > 0) {
+        if (gps.encode(ss.read())) {  // Read data from GPS
+          Serial.print("Successfully Connected to ");
+          Serial.print(gps.satellites.value());
+          Serial.println(" Satellites.");
+
+          antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
+        }
+      }
+    }
+  }
+
+  Serial.print("Antenna GPS: ");
+  Serial.println(antenna_gps.toString());
+  return antenna_gps;
+}
+
+//Take values from antenna_gps to get reference location
+float ref_lat = antenna_gps.x; 
+float ref_lon = antenna_gps.y; 
+float ref_alt = antenna_gps.z;
 
 #define DEG_TO_RAD 0.017453292519943295769236907684886
 #define EARTH_RADIUS 6371000 // in meters 
 
-//Will be read-in rocket coordinates, just test for now
-float lat_test = 44.56849; // Example latitude for testing
-float lon_test = 123.275; // Example longitude for testing
-float alt_test = 300; // Example altitude for testing
-
+//Create function that converts regular coordinate to East, North, Up
 void llaToEnu(float lat, float lon, float alt, float& east, float& north, float& up) {
     float delta_lat = lat - ref_lat;
     float delta_lon = lon - ref_lon;
@@ -36,24 +85,8 @@ void parseIncomingData(String data, float& lat, float& lon, float& alt) {
 
 float east, north, up;
 
-
-// Define stepper motor connections
-//STEPPER 1: HORIZONTAL MOTOR
-#define motor1_Pin1 8   // IN1 on NEMA 17 ==> Blue   on MOTOR 1
-#define motor1_Pin2 9   // IN2 on NEMA 17 ==> Pink   on MOTOR 1
-#define motor1_Pin3 10  // IN3 on NEMA 17 ==> Yellow on MOTOR 1
-#define motor1_Pin4 11  // IN4 on NEMA 17 ==> Orange on MOTOR 1
-
-//STEPPER 2: VERTICAL MOTOR
-#define motor2_Pin1 4  // IN1 on NEMA 17 ==> Blue   on MOTOR 2
-#define motor2_Pin2 5  // IN2 on NEMA 17 ==> Pink   on MOTOR 2
-#define motor2_Pin3 6  // IN3 on NEMA 17 ==> Yellow on MOTOR 2
-#define motor2_Pin4 7  // IN4 on NEMA 17 ==> Orange on MOTOR 2
-#define vertical_limit_pin 2  // Limit switch for Motor 2
-
 // Constants for steps per revolution and speed of stepper motors
 #define STEPS_PER_REVOLUTION 200
-#define SPEED 30
 #define PI 3.1415926535897932384626433832795
 #define TWO_PI 6.283185307179586476925286766559
 #define HALF_PI 1.5707963267948966192313216916398
@@ -93,16 +126,15 @@ void setup() {
   Serial.begin(9600);
   Serial.println("INITIALIZING");
   // Set stepper motor speeds
-  MOTOR1.setSpeed(SPEED);
-  MOTOR2.setSpeed(SPEED);
+  stepper1.setSpeed(500);
+  stepper1.setMaxSpeed(20000); //20000 steps/second max
+  stepper1.setAcceleration(50000); 
+  stepper2.setSpeed(500);
+  stepper2.setMaxSpeed(20000); //20000 steps/second max
+  stepper2.setAcceleration(50000); 
   
   pinMode(vertical_limit_pin, INPUT);
-//   MOTOR1.step(-200);
-//   MOTOR1.step(400);
-//   MOTOR1.step(-200);
-//   while (digitalRead(vertical_limit_pin) == LOW) {  // Find bottom limit
-//     MOTOR2.step(-1);
-//   }
+
   //PHI_MIN CHANGE 3: Set at 45 initially
   MOTOR2.step(25);  // Reset to 45�
 }
@@ -223,10 +255,12 @@ if (Serial.available() > 0) {
         Serial.println(MOTOR2_steps);
     
         // Move stepper motors based on calculated angles
-        MOTOR1.step(MOTOR1_steps);
-        MOTOR2.step(MOTOR2_steps);
-        delay(2000);  // Adjust delay as needed
-        onerot = false;
+        
+       stepper1.moveTo(MOTOR1_steps);
+       stepper1.runToPosition();
+       stepper2.moveTo(MOTOR2_steps);
+       stepper2.runToPosition();
+`      delay(2000);  // Adjust delay as needed
         }
 
           // Reset incomingData for the next message
@@ -236,6 +270,4 @@ if (Serial.available() > 0) {
           incomingData += receivedChar;
         }
       }
-      
- 
   }
