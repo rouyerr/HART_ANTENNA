@@ -160,8 +160,8 @@ if (Serial.available() > 0) {
      Serial.print(up);
  
         // Components of Vector That Points at Rocket coordinate
-        float dx = north;
-        float dy = east;
+        float dx = east;
+        float dy = north;
         float dz = up;
 
         //------ THETA CALC ------
@@ -176,7 +176,6 @@ if (Serial.available() > 0) {
         //Print current rocket angle for testing
         float rocket_angle = (atan((dz)/(mag(dxy))))/(DEG_TO_RAD);
         Serial.println(rocket_angle);
-        bool onerot = false;
 
         //PHI_MIN CHANGE 4: If conditions
         //Only continue once dz > zmin (Rocket above 45 deg angle)
@@ -185,7 +184,7 @@ if (Serial.available() > 0) {
         }
         //Put everything left in 'if' statement>>>
         if (above45yet == 1) {
-        Serial.println('Above 45');
+        Serial.println("Above 45");
         //Now start actual rocket tracking code:
 
     
