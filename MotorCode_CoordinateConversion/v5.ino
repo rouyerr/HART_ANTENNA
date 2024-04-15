@@ -127,15 +127,10 @@ if (Serial.available() > 0) {
      Serial.print("up");
      Serial.print(up);
  
-        // Rocket Coordinates
-        float yr = north;
-        float xr = east;
-        float zr = up;
-    
         // Components of Vector That Points at Rocket
-        float dx = xr;
-        float dy = yr;
-        float dz = zr;
+        float dx = east;
+        float dy = north;
+        float dz = up;
 
         //------ THETA CALC ------
     
