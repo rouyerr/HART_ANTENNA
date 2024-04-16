@@ -132,7 +132,8 @@ void setup() {
   pinMode(vertical_limit_pin, INPUT);
 
   //PHI_MIN CHANGE 3: Set at 45 initially
-  stepper2.moveTo(25);
+  float start_steps = offset/360*STEPS_PER_REVOLUTION;
+  stepper2.moveTo(start_steps);
   stepper2.runToPosition();  // Reset to 45�
 }
 
