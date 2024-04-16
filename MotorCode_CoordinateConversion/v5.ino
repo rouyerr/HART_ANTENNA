@@ -128,10 +128,9 @@ void setup() {
   stepper2.setSpeed(500);
   stepper2.setMaxSpeed(20000); //20000 steps/second max
   stepper2.setAcceleration(50000); 
-  
-  pinMode(vertical_limit_pin, INPUT);
 
   //PHI_MIN CHANGE 3: Set at 45 initially
+  Serial.println("Start steps calculated and moving stepper motor...");
   float start_steps = offset/360*STEPS_PER_REVOLUTION;
   stepper2.moveTo(start_steps);
   stepper2.runToPosition();  // Reset to 45�
@@ -150,12 +149,12 @@ if (Serial.available() > 0) {
       // Use them for your llaToEnu and subsequent calculations
       llaToEnu(lat, lon, alt, east, north, up);
 
-     Serial.print("East" );
+     Serial.print("East " );
      Serial.print(east);
-     Serial.print("North");
+     Serial.print("North ");
      Serial.print(north);
-     Serial.print("up");
-     Serial.print(up);
+     Serial.print("up ");
+     Serial.println(up);
  
         // Components of Vector That Points at Rocket coordinate
         float dx = east;
