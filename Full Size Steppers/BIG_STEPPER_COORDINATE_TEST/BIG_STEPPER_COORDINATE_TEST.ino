@@ -36,7 +36,7 @@ void llaToEnu(float lat, float lon, float alt, float& east, float& north, float&
 float east, north, up;
 
 // Constants for steps per revolution and speed of stepper motors
-#define STEPS_PER_REVOLUTION 200
+#define STEPS_PER_REVOLUTION 400
 #define PI 3.1415926535897932384626433832795
 #define TWO_PI 6.283185307179586476925286766559
 #define HALF_PI 1.5707963267948966192313216916398
@@ -77,16 +77,19 @@ void setup() {
   // Set stepper motor speeds
   stepper1.setSpeed(500);
   stepper1.setMaxSpeed(20000); //20000 steps/second max
-  stepper1.setAcceleration(50000); 
+  stepper1.setAcceleration(2000); 
   stepper2.setSpeed(500);
   stepper2.setMaxSpeed(20000); //20000 steps/second max
-  stepper2.setAcceleration(50000); 
+  stepper2.setAcceleration(2000); 
   
   //Start off at offset
   Serial.println("Start steps calculated and moving stepper motor...");
   float start_steps = offset/360*STEPS_PER_REVOLUTION;
   stepper2.moveTo(start_steps);
   stepper2.runToPosition();
+
+  delay(2000);
+  Serial.println("BEGIN LOOP-------------------------->");
 }
 
 void loop() {
@@ -94,9 +97,9 @@ while (onerot) {
  llaToEnu(lat_test, lon_test, alt_test, east, north, up);
  Serial.print("East " );
  Serial.print(east);
- Serial.print("North ");
+ Serial.print("  North ");
  Serial.print(north);
- Serial.print("up ");
+ Serial.print("  up ");
  Serial.println(up);
  
     // Rocket Coordinates
