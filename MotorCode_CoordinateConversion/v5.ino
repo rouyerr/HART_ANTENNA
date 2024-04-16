@@ -118,10 +118,6 @@ float mag(float vector[]) {
   return sqrt(pow(vector[0], 2) + pow(vector[1], 2));
 }
 
-// Initialize stepper motors
-Stepper MOTOR1(STEPS_PER_REVOLUTION, motor1_Pin1, motor1_Pin3, motor1_Pin2, motor1_Pin4);
-Stepper MOTOR2(STEPS_PER_REVOLUTION, motor2_Pin1, motor2_Pin3, motor2_Pin2, motor2_Pin4);
-
 void setup() {
   Serial.begin(9600);
   Serial.println("INITIALIZING");
@@ -136,7 +132,8 @@ void setup() {
   pinMode(vertical_limit_pin, INPUT);
 
   //PHI_MIN CHANGE 3: Set at 45 initially
-  MOTOR2.step(25);  // Reset to 45�
+  stepper2.moveTo(25);
+  stepper2.runToPosition();  // Reset to 45�
 }
 
 void loop() {
@@ -175,6 +172,7 @@ if (Serial.available() > 0) {
         float z_min = mag(dxy)*tan(phi_i_offset);
         //Print current rocket angle for testing
         float rocket_angle = (atan((dz)/(mag(dxy))))/(DEG_TO_RAD);
+        Serial.print("Rocket Angle");
         Serial.println(rocket_angle);
 
         //PHI_MIN CHANGE 4: If conditions
