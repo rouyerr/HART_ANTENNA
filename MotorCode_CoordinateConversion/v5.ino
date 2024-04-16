@@ -175,7 +175,7 @@ if (Serial.available() > 0) {
         Serial.print("Rocket Angle");
         Serial.println(rocket_angle);
 
-        //PHI_MIN CHANGE 4: If conditions
+        //PHI_MIN CHANGE 4: If condition
         //Only continue once dz > zmin (Rocket above 45 deg angle)
         if (dz > z_min) {
           above45yet = 1;
