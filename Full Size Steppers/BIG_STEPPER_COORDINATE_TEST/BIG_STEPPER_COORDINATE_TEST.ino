@@ -85,7 +85,8 @@ void setup() {
   //Start off at offset
   Serial.println("Start steps calculated and moving stepper motor...");
   float start_steps = offset/360*STEPS_PER_REVOLUTION;
-  stepper2.moveTo(start_steps);
+  Serial.println(start_steps);
+  stepper2.move(start_steps);
   stepper2.runToPosition();
 
   delay(2000);
@@ -198,9 +199,9 @@ while (onerot) {
     Serial.println(MOTOR2_steps);
     
     // Move stepper motors based on calculated angles
-       stepper1.moveTo(MOTOR1_steps);
+       stepper1.move(MOTOR1_steps);
        stepper1.runToPosition();
-       stepper2.moveTo(MOTOR2_steps);
+       stepper2.move(MOTOR2_steps);
        stepper2.runToPosition();
        delay(1000);  // Adjust delay as needed
     onerot = false;
