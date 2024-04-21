@@ -8,8 +8,8 @@
 #define stepPin2 9
 #define interface 1
 
-AccelStepper stepper1 = AccelStepper(interface, stepPin1, dirPin1);
-AccelStepper stepper2 = AccelStepper(interface, stepPin2, dirPin2);
+AccelStepper stepper2 = AccelStepper(interface, stepPin1, dirPin1);
+AccelStepper stepper1 = AccelStepper(interface, stepPin2, dirPin2);
 
 //GPS initialization
 static const int RXPin = 12;  // Define GPS Module connections
@@ -89,14 +89,17 @@ Point initialize_GPS() {
   if (i >= 25) {
     Serial.println("Unable to Connect to GPS Satellites.");
   } else {
+    Serial.println("Reading GPS Satellites 0. "+String(antenna_gps.x));
     while (antenna_gps.x == 0.0) {
+      Serial.println("Reading GPS Satellites 1. "+String(antenna_gps.x));
       while (ss.available() > 0) {
         if (gps.encode(ss.read())) {  // Read data from GPS
           Serial.print("Successfully Connected to ");
           Serial.print(gps.satellites.value());
           Serial.println(" Satellites.");
-
-          antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
+          if (gps.satellites.value()>4){
+            antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
+          }
         }
       }
     }
@@ -155,7 +158,7 @@ boolean above45yet = 0;
 float xop = 0;
 float yop = 1;
 float zop = 0;
-
+static String incomingData = "";
 //_____SET OLD PHI INITIALLY WITH STARTING ANGLE_____
 //(NOW PHI DEFINED AS DIFFERENCE FROM INITIAL 45 POSITION)
 float old_phi = 0;
@@ -170,16 +173,16 @@ float theta_abs;
 float mag(float vector[]) {
   return sqrt(pow(vector[0], 2) + pow(vector[1], 2));
 }
-
+int verbose = 0;
 void setup() {
   Serial.begin(9600);
   Serial.println("INITIALIZING");
   // Set stepper motor speeds
   stepper1.setSpeed(500);
-  stepper1.setMaxSpeed(20000);  //20000 steps/second max
+  stepper1.setMaxSpeed(2000);  //20000 steps/second max
   stepper1.setAcceleration(50000);
   stepper2.setSpeed(500);
-  stepper2.setMaxSpeed(20000);  //20000 steps/second max
+  stepper2.setMaxSpeed(2000);  //20000 steps/second max
   stepper2.setAcceleration(50000);
 
   Point antenna_gps = initialize_GPS();
@@ -196,8 +199,10 @@ void setup() {
 }
 
 void loop() {
-  static String incomingData = "";
+  
+
   if (Serial.available() > 0) {
+    
     char receivedChar = Serial.read();
     if (receivedChar == '\n') {
       // When a newline is received, parse the data
@@ -207,14 +212,14 @@ void loop() {
       // Now you have new lat, lon, and alt values
       // Use them for your llaToEnu and subsequent calculations
       llaToEnu(lat, lon, alt, east, north, up);
-
+      if (verbose >0){
       Serial.print("East ");
       Serial.print(east);
       Serial.print("North ");
       Serial.print(north);
       Serial.print("up ");
       Serial.println(up);
-
+      }
       // Components of Vector That Points at Rocket coordinate
       float dx = east;
       float dy = north;
@@ -231,19 +236,21 @@ void loop() {
       float z_min = mag(dxy) * tan(phi_i_offset);
       //Print current rocket angle for testing
       float rocket_angle = (atan((dz) / (mag(dxy)))) / (DEG_TO_RAD);
+      if (verbose >0){
       Serial.print("Rocket Angle");
       Serial.println(rocket_angle);
-
+      }
       //PHI_MIN CHANGE 4: If condition
       //Only continue once dz > zmin (Rocket above 45 deg angle)
       if (dz > z_min) {
         above45yet = 1;
       }
       //Put everything left in 'if' statement>>>
-      if (above45yet == 1) {
+      if (1){//above45yet == 1) {
+        if (verbose >0){
         Serial.println("Above 45");
         //Now start actual rocket tracking code:
-
+        }
 
         // Solve for angle between them
         float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
@@ -252,10 +259,14 @@ void loop() {
         //ADJUST FOLLOWING CONDITION FOR MOTOR SIGN CONVENTION -- CW+: dx<0   CCW: dx>0
         if (dx < 0) {
           theta_abs = TWO_PI - theta;
+          if (verbose >0){
           Serial.println("dx>0");
+          }
         } else {
           theta_abs = theta;
+          if (verbose >0){
           Serial.println("dx>0");
+          }
         }
 
         //OPTIMIZATION FOR THETA (Finds fastest route):
@@ -276,14 +287,18 @@ void loop() {
         float phi = atan((dz) / (mag(dxy)));
         //Relative to 45 degree starting point
         phi = phi - phi_i_offset;
+        if (verbose >0){
         Serial.print("Phi (V1): ");
         Serial.println(degrees(phi));
+        }
 
         //***90 degree max for vertical motor here:
         if (phi > HALF_PI) {
           phi = PI - phi;
+          if (verbose >0){
           Serial.print("Phi (V2): ");
           Serial.println(degrees(phi));
+          }
         }
 
         //Calculate how much phi should change from previous phi
@@ -292,18 +307,23 @@ void loop() {
         //Update old position to be used for next loop as calculated theta from this loop
         old_theta = theta_abs;
         old_phi = phi;
+        if (verbose >0){
         Serial.print("Theta ");
         Serial.println(degrees(theta_abs));
         Serial.print("Phi ");
         Serial.println(degrees(phi));
-
+        }
         //Convert angle to motor step instruction
         int MOTOR1_steps = (theta_dif / TWO_PI * STEPS_PER_REVOLUTION);
+        if (verbose >0){
         Serial.print("Motor 1 (Horizontal) Steps: ");
         Serial.println(MOTOR1_steps);
+        }
         int MOTOR2_steps = (phi_dif / TWO_PI * STEPS_PER_REVOLUTION);
+        if (verbose >0){
         Serial.print("Motor 2 (Vertivcal) Steps: ");
         Serial.println(MOTOR2_steps);
+        }
 
         // Move stepper motors based on calculated angles
 
@@ -311,7 +331,7 @@ void loop() {
         stepper2.move(MOTOR2_steps);
         stepper1.runToPosition();
         stepper2.runToPosition();
-        delay(1000);  // Adjust delay as needed
+        //delay(1000);  // Adjust delay as needed
       }
 
       // Reset incomingData for the next message
