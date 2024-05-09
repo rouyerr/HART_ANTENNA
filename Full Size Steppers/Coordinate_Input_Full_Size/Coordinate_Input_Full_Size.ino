@@ -70,33 +70,48 @@ struct Point {  // Define 3-Dimensional Point Variable and necessary operators
     return String("(") + String(x, 6) + ", " + String(y, 6) + ", " + String(z, 6) + ")";
   }
 };
-
+int verbose = 1;
 Point initialize_GPS() {
+  if (verbose >0){
   Serial.println("\nINITIALIZING GPS");
+  }
 
   Point antenna_gps;
 
   ss.begin(9600);
-
+  if (verbose >0){
   Serial.print("Connecting to GPS satellites, please wait.");
+  }
   int i = 0;
   while (!ss.available() && i++ <= 30) {  // Check if able to connect to GPS
     delay(100);
+    if (verbose >0){
     Serial.print(".");
+    }
   }
+  if (verbose >0){
   Serial.print(".");
   Serial.println(i);
+  }
   if (i >= 25) {
+    if (verbose >0){
     Serial.println("Unable to Connect to GPS Satellites.");
+    }
   } else {
-    Serial.println("Reading GPS Satellites 0. "+String(antenna_gps.x));
+    if (verbose >2){
+    Serial.println("Reading GPS Satellites 0. "+ String(antenna_gps.x));
+    }
     while (antenna_gps.x == 0.0) {
+      if (verbose >2){
       Serial.println("Reading GPS Satellites 1. "+String(antenna_gps.x));
+      }
       while (ss.available() > 0) {
         if (gps.encode(ss.read())) {  // Read data from GPS
+        if (verbose >0){
           Serial.print("Successfully Connected to ");
           Serial.print(gps.satellites.value());
           Serial.println(" Satellites.");
+        }
           if (gps.satellites.value()>4){
             antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
           }
@@ -104,9 +119,10 @@ Point initialize_GPS() {
       }
     }
   }
-
+if (verbose >0){
   Serial.print("Antenna GPS: ");
   Serial.println(antenna_gps.toString());
+}
   return antenna_gps;
 }
 
@@ -128,6 +144,18 @@ void llaToEnu(float lat, float lon, float alt, float& east, float& north, float&
   east = -delta_lon * DEG_TO_RAD * EARTH_RADIUS * cos_ref_lat;
   north = delta_lat * DEG_TO_RAD * EARTH_RADIUS;
   up = alt - ref_alt;
+  if (verbose >2){
+  Serial.print("Delta Latitude: ");
+  Serial.println(delta_lat);
+  Serial.print("Delta Longitude: ");
+  Serial.println(delta_lon);
+  Serial.print("East: ");
+  Serial.println(east);
+  Serial.print("North: ");
+  Serial.println(north);
+  Serial.print("Up: ");
+  Serial.println(up);
+  }
 };
 
 void parseIncomingData(String data, float& lat, float& lon, float& alt) {
@@ -139,6 +167,21 @@ void parseIncomingData(String data, float& lat, float& lon, float& alt) {
   alt = data.substring(secondCommaIndex + 1).toFloat();
 }
 
+String receiveData() {
+  String incomingData = "";
+  while (Serial.available() > 0) {
+    char receivedChar = Serial.read();
+    if (receivedChar == '\n') {
+      // When a newline is received, return the data
+      return incomingData;
+    } else {
+      // Append receivedChar to incomingData
+      incomingData += receivedChar;
+    }
+  }
+  // If no newline character is received yet, return an empty string
+  return "";
+}
 float east, north, up;
 
 // Constants for steps per revolution and speed of stepper motors
@@ -158,7 +201,6 @@ boolean above45yet = 0;
 float xop = 0;
 float yop = 1;
 float zop = 0;
-static String incomingData = "";
 //_____SET OLD PHI INITIALLY WITH STARTING ANGLE_____
 //(NOW PHI DEFINED AS DIFFERENCE FROM INITIAL 45 POSITION)
 float old_phi = 0;
@@ -173,10 +215,12 @@ float theta_abs;
 float mag(float vector[]) {
   return sqrt(pow(vector[0], 2) + pow(vector[1], 2));
 }
-int verbose = 0;
+
 void setup() {
   Serial.begin(9600);
+  if (verbose >0){
   Serial.println("INITIALIZING");
+  }
   // Set stepper motor speeds
   stepper1.setSpeed(500);
   stepper1.setMaxSpeed(2000);  //20000 steps/second max
@@ -187,31 +231,22 @@ void setup() {
 
   Point antenna_gps = initialize_GPS();
 
-  float ref_lat = antenna_gps.x;
-  float ref_lon = antenna_gps.y;
-  float ref_alt = antenna_gps.z;
+  ref_lat = antenna_gps.x;
+  ref_lon = antenna_gps.y;
+  ref_alt = antenna_gps.z;
 
   //PHI_MIN CHANGE 3: Set at 45 initially
+  if (verbose >0){
   Serial.println("Start steps calculated and moving stepper motor...");
+  }
   float start_steps = offset / 360 * STEPS_PER_REVOLUTION;
   stepper2.move(start_steps);
   stepper2.runToPosition();  // Reset to 45�
 }
 
-void loop() {
-  
-
-  if (Serial.available() > 0) {
-    
-    char receivedChar = Serial.read();
-    if (receivedChar == '\n') {
-      // When a newline is received, parse the data
-      float lat, lon, alt;
-      parseIncomingData(incomingData, lat, lon, alt);
-
-      // Now you have new lat, lon, and alt values
-      // Use them for your llaToEnu and subsequent calculations
-      llaToEnu(lat, lon, alt, east, north, up);
+void point_motors(float lat, float lon, float alt){
+  llaToEnu(lat, lon, alt, east, north, up);
+      
       if (verbose >0){
       Serial.print("East ");
       Serial.print(east);
@@ -247,7 +282,7 @@ void loop() {
       }
       //Put everything left in 'if' statement>>>
       if (1){//above45yet == 1) {
-        if (verbose >0){
+        if (verbose >2){
         Serial.println("Above 45");
         //Now start actual rocket tracking code:
         }
@@ -259,12 +294,12 @@ void loop() {
         //ADJUST FOLLOWING CONDITION FOR MOTOR SIGN CONVENTION -- CW+: dx<0   CCW: dx>0
         if (dx < 0) {
           theta_abs = TWO_PI - theta;
-          if (verbose >0){
-          Serial.println("dx>0");
+          if (verbose >2){
+          Serial.println("dx<0");
           }
         } else {
           theta_abs = theta;
-          if (verbose >0){
+          if (verbose >2){
           Serial.println("dx>0");
           }
         }
@@ -287,7 +322,7 @@ void loop() {
         float phi = atan((dz) / (mag(dxy)));
         //Relative to 45 degree starting point
         phi = phi - phi_i_offset;
-        if (verbose >0){
+        if (verbose >2){
         Serial.print("Phi (V1): ");
         Serial.println(degrees(phi));
         }
@@ -295,7 +330,7 @@ void loop() {
         //***90 degree max for vertical motor here:
         if (phi > HALF_PI) {
           phi = PI - phi;
-          if (verbose >0){
+          if (verbose >2){
           Serial.print("Phi (V2): ");
           Serial.println(degrees(phi));
           }
@@ -307,7 +342,7 @@ void loop() {
         //Update old position to be used for next loop as calculated theta from this loop
         old_theta = theta_abs;
         old_phi = phi;
-        if (verbose >0){
+        if (verbose >1){
         Serial.print("Theta ");
         Serial.println(degrees(theta_abs));
         Serial.print("Phi ");
@@ -315,12 +350,12 @@ void loop() {
         }
         //Convert angle to motor step instruction
         int MOTOR1_steps = (theta_dif / TWO_PI * STEPS_PER_REVOLUTION);
-        if (verbose >0){
+        if (verbose >1){
         Serial.print("Motor 1 (Horizontal) Steps: ");
         Serial.println(MOTOR1_steps);
         }
         int MOTOR2_steps = (phi_dif / TWO_PI * STEPS_PER_REVOLUTION);
-        if (verbose >0){
+        if (verbose >1){
         Serial.print("Motor 2 (Vertivcal) Steps: ");
         Serial.println(MOTOR2_steps);
         }
@@ -331,14 +366,23 @@ void loop() {
         stepper2.move(MOTOR2_steps);
         stepper1.runToPosition();
         stepper2.runToPosition();
-        //delay(1000);  // Adjust delay as needed
-      }
+}
+}
 
-      // Reset incomingData for the next message
-      incomingData = "";
-    } else {
-      // Append receivedChar to incomingData
-      incomingData += receivedChar;
-    }
-  }
+void loop() { 
+      Serial.print('\x05');
+      String incomingData = receiveData();
+      float lat, lon, alt;
+      parseIncomingData(incomingData, lat, lon, alt);
+      if (verbose >2){
+      Serial.print("incoming data from py ");
+      Serial.print(incomingData);
+      Serial.print("Lat: ");
+      Serial.print(lat);
+      Serial.print(" long: ");
+      Serial.print(lon);
+      Serial.print(" alt: ");
+      Serial.println(alt);
+      }
+      point_motors( lat, lon, alt);
 }
