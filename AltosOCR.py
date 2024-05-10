@@ -14,7 +14,7 @@ class OCRScreenReader:
         self.long_deg = {"top": 400, "left": 1525, "width": 41, "height": 125//3}
         self.long_min = {"top": 400, "left": 1574, "width": 100, "height": 125//3}
 
-        self.alt = {"top": 450, "left": 1522, "width": 120, "height": 125//3}
+        self.alt = {"top": 440, "left": 1522, "width": 120, "height": 125//3}
         winX, winY, winWidth, winHeight = (1920//2, 0, 1920//2, 1080)
         
         self.reader = easyocr.Reader(['en'])
@@ -73,9 +73,9 @@ class OCRScreenReader:
         
         
         formatted_lat = f"{lat_deg_results[0][1]}.{str(float(lat_min_results[0][1])/60)[2:]}"
-        formatted_long = f"{long_deg_results[0][1]}.{str(float(long_min_results[0][1])/60)[2:]}"
+        formatted_long = f"-{long_deg_results[0][1]}.{str(float(long_min_results[0][1])/60)[2:]}"
         formatted_alt = f"{alt_results[0][1]}"
-        if 1:
+        if 0:
             print(f"Lat:{formatted_lat}")
             print(f"Long:{formatted_long}")
             print(f"Alt:{formatted_alt}")
@@ -131,10 +131,10 @@ class OCRScreenReader:
         lat = self.parse_coordinates(results[0][1])
         long = self.parse_coordinates(results[1][1])
         alt = (float(results[2][1].replace(' ','').replace(',','.')))
-        print(f"Lat:{lat}")
-        print(f"Long:{long}")
-        print(f"Alt:{alt}")
-        return{lat,long,alt}
+        # print(f"Lat:{lat}")
+        # print(f"Long:{long}")
+        # print(f"Alt:{alt}")
+        return (lat,long,alt)
 if __name__ == "__main__":
     ocr_reader = OCRScreenReader()
     # ocr_reader.setup_window("AltusMetrum", 800, 600, 100, 100)

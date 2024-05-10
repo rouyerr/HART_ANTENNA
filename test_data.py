@@ -1,11 +1,8 @@
 import serial
 import time
 import threading
-import OCRScreenReader
 
-ser = serial.Serial('COM6', 9600, timeout=1)
-time.sleep(2)
-ocr = OCRScreenReader()
+ser = serial.Serial('COM5', 9600, timeout=1)
 
 # Global variables to hold the latest position data and a lock for synchronization
 latest_position = (0,0,0)
@@ -14,44 +11,36 @@ position_lock = threading.Lock()
 def send_data(lat, lon, alt):
     data = "{},{},{}\n".format(lat, lon, alt)
     ser.write(data.encode())
-
-def ocr_thread():
-    global latest_position
-    global position_lock
-    try:
-        while True:
-            # OCR processing
-            lat, lon, alt = ocr.mul_capture_screen_area()  # Update with actual OCR method
-
-            # Acquire the lock before updating the shared data
-            with position_lock:
-                latest_position= (lat, lon, alt)
-
-            print(f"Updated position: Lat={lat}, Lon={lon}, Alt={alt}")
-
-    except KeyboardInterrupt:
-        print("OCR thread stopped")
+      
 
 def handle_serial_message(decoded_byte):
     global latest_position
     global position_lock
 
     if decoded_byte == "\x05":
-        # Signal to send the latest position data
-        with position_lock:
-            lat, lon, alt = latest_position
-        send_data(lat, lon, alt)
-        print(f"Sent data: Lat={lat}, Lon={lon}, Alt={alt}")
-    elif decoded_byte == "1":
-        # Display message received
-        message = ser.read_until(b'\n').decode().strip()
-        print(f"Display message: {message}")
+        print(f"Got request for data")
+        position_input = input("Enter latitude, longitude, and altitude (comma-separated): ")
+        try:
+            lat, lon, alt = map(float, position_input.split(','))
+            
+            with position_lock:
+                latest_position = (lat, lon, alt)
+            send_data(lat, lon, alt)
+            print(f"Sent data: Lat={lat}, Lon={lon}, Alt={alt}")
+        except ValueError:
+            print("Invalid input format. Please enter latitude, longitude, and altitude in decimal format separated by commas.")
+            # Send dummy data to maintain communication with the other program
+            with position_lock:
+                lat, lon, alt = latest_position
+            send_data(lat, lon, alt)
+            print(f"Sent dummy data: Lat={lat}, Lon={lon}, Alt={alt}")
     else:
-        # Unrecognized message type
-        print(f"Received unrecognized message: {decoded_byte}")
-
+        message = ser.read_until(b'\n').decode().strip()
+        print(f"Display message: {decoded_byte}{message}")
 def serial_thread():
+    
     try:
+        
         while True:
             # Read a byte from the serial port
             byte = ser.read(1)
@@ -64,12 +53,9 @@ def serial_thread():
     except KeyboardInterrupt:
         print("Serial thread stopped")
 
-# Create and start OCR thread
-ocr_thread = threading.Thread(target=ocr_thread)
-ocr_thread.daemon = True
-ocr_thread.start()
 
 # Start serial communication loop
+        
 serial_thread()
 
 ser.close()  # Close the serial connection
