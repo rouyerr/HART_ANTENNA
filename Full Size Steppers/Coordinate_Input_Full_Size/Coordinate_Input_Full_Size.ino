@@ -112,7 +112,7 @@ Point initialize_GPS() {
           Serial.print(gps.satellites.value());
           Serial.println(" Satellites.");
         }
-          if (gps.satellites.value()>4){
+          if (gps.satellites.value()>5){
             antenna_gps = { gps.location.lat(), gps.location.lng(), gps.altitude.meters() };  // Store Antenna GPS location and return
           }
         }
@@ -222,19 +222,30 @@ void setup() {
   Serial.println("INITIALIZING");
   }
   // Set stepper motor speeds
-  stepper1.setSpeed(500);
-  stepper1.setMaxSpeed(2000);  //20000 steps/second max
-  stepper1.setAcceleration(50000);
-  stepper2.setSpeed(500);
-  stepper2.setMaxSpeed(2000);  //20000 steps/second max
-  stepper2.setAcceleration(50000);
+  stepper1.setSpeed(10);
+  stepper1.setMaxSpeed(10);  //20000 steps/second max
+  stepper1.setAcceleration(5);
+  stepper2.setSpeed(10);
+  stepper2.setMaxSpeed(10);  //20000 steps/second max
+  stepper2.setAcceleration(5);
 
   Point antenna_gps = initialize_GPS();
 
   ref_lat = antenna_gps.x;
   ref_lon = antenna_gps.y;
   ref_alt = antenna_gps.z;
+  String init_string = "";  
+  while (0){//init_string.charAt(0) != '\x01'){
 
+  
+    if (verbose >0){
+    Serial.print("Waiting for init from py: ");
+    
+    Serial.println(init_string.charAt(0));
+    }
+
+    init_string =  receiveData();
+  }
   //PHI_MIN CHANGE 3: Set at 45 initially
   if (verbose >0){
   Serial.println("Start steps calculated and moving stepper motor...");
@@ -369,7 +380,7 @@ void point_motors(float lat, float lon, float alt){
 }
 }
 
-void loop() { 
+void loop() {
       Serial.print('\x05');
       String incomingData = receiveData();
       float lat, lon, alt;
