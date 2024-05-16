@@ -170,7 +170,7 @@ void llaToEnu(float lat, float lon, float alt, float& east, float& north, float&
 
   float cos_ref_lat = cos(ref_lat * DEG_TO_RAD);
 
-  east = -delta_lon * DEG_TO_RAD * EARTH_RADIUS * cos_ref_lat;
+  east = delta_lon * DEG_TO_RAD * EARTH_RADIUS * cos_ref_lat;
   north = delta_lat * DEG_TO_RAD * EARTH_RADIUS;
   up = alt - ref_alt;
   if (verbose >2){
