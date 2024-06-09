@@ -1,8 +1,11 @@
 import serial
 import time
 import threading
+import logging
 from AltosOCR import OCRScreenReader 
 
+logging.basicConfig(filename='data.log', filemode='a', level=logging.DEBUG, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ser = serial.Serial('COM5', 9600, timeout=1)
 time.sleep(2)
 ocr = OCRScreenReader()
@@ -30,8 +33,10 @@ def ocr_thread():
                     latest_position = (lat, lon, alt)
                 end_time = time.time()
                 print(f"Updated position: Lat={lat}, Lon={lon}, Alt={alt}, Latency = {end_time - start_time} s")
+                logging.info(f"Updated position: Lat={lat}, Lon={lon}, Alt={alt}, Latency={end_time - start_time:.2f} s")
             except Exception as e:
                 print(f"Error occurred: {e}")
+                logging.info(f"Error occurred: {e}")
     except KeyboardInterrupt:
         print("OCR thread stopped")
         
@@ -50,6 +55,7 @@ def handle_serial_message(decoded_byte):
     else:
         message = ser.read_until(b'\n').decode().strip()
         print(f"Display message: {decoded_byte}{message}")
+        logging.info(f"Display message: {decoded_byte}{message}")
     
 
 def serial_thread():
@@ -75,3 +81,4 @@ ocr_thread.start()
 serial_thread()
 
 ser.close()  # Close the serial connection
+logging.info("Serial connection closed")
