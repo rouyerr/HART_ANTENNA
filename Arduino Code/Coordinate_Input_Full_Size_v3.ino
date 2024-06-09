@@ -380,7 +380,7 @@ void point_motors(float lat, float lon, float alt) {
     // Solve for angle between them
     float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
     
-    //Inverse cos can only give angle between 0 and 180,have to account for the positive x half of xy plane using dx indicator and adjusting:
+    //Inverse cos can only give angle between 0 and 180,have to account for the negative x half of xy plane using dx indicator and adjusting:
     //ADJUST FOLLOWING CONDITION FOR MOTOR SIGN CONVENTION -- CW+: dx<0   CCW: dx>0
     if (dx < 0) {
       theta_abs = TWO_PI - theta;
@@ -411,7 +411,6 @@ void point_motors(float lat, float lon, float alt) {
     
     //------ PHI CALC ------
     // Solve for phi using arctan with mag(dxy) as horizontal triangle leg and dz as vertical leg
-    // Motor oritentaion: Add negative in front of phi calc if raising antenna is CCW for vertical motor
     float phi = atan((dz)/(mag(dxy)));
 
     //Relative to 45 degree starting point
