@@ -20,9 +20,16 @@
 // const float BACKUP_LAT = 35.353333; // Approx Far CA Latitude
 // const float BACKUP_LON = -117.807167; // Approx Far CA Longitude
 // const float BACKUP_ALT = 30.0; // Approximate Far CAaltitude in meters
-const float BACKUP_LAT = 44.56744; // Approx Merry Latitude
-const float BACKUP_LON = -123.27447;  // Approx Merry Longitude
-const float BACKUP_ALT = 0.0; // Approximate merry CAaltitude in meters
+//const float BACKUP_LAT = 44.57232; // Approx Remy Latitude
+//const float BACKUP_LON = -123.18552;  // Approx Remy Longitude
+//const float BACKUP_ALT = 65; // Approximate Remy in meters
+
+//const float BACKUP_LAT = 44.56737; // Approx Covell Latitude
+//const float BACKUP_LON = -123.27482;  // Approx Covell Longitude
+
+const float BACKUP_LAT = 44.5596601; // Approx Covell Latitude
+const float BACKUP_LON = -123.2787409;  // Approx Covell Longitude
+const float BACKUP_ALT = 80; // Approximate covell in meters
 
 const int MAX_VERT_ROT_NEG = (int) (-STEPS_PER_REVOLUTION * .25);
 const int MAX_VERT_ROT_POS = STEPS_PER_REVOLUTION * 0;
@@ -44,7 +51,7 @@ static const int RXPin = 12;  // Define GPS Module connections
 static const int TXPin = 13;
 static const uint32_t GPSBaud = 9600;  // Define GPS baud rate
 
-int verbose = 4;
+int verbose = 0;
 int HOR_DIR=1;
 int VERT_DIR=1;
 float ref_lat;
@@ -240,28 +247,36 @@ bool parseIncomingData(String data, float& lat, float& lon, float& alt) {
   return true;
 }
 String receiveData() {
-  int timeout=1200;
-  int i = 0;
-  while(i++ < timeout){
+  unsigned long startTime = millis(); // Start time for timeout
+  const unsigned long timeout = 12000; // Timeout in milliseconds
   String incomingData = "";
+
+  while (millis() - startTime < timeout) {
     while (Serial.available() > 0) {
       char receivedChar = Serial.read();
       if (receivedChar == '\n') {
         // When a newline is received, return the data
         return incomingData;
       } else {
-        // Append receivedChar to incomingData
-        incomingData += receivedChar;
+        // Check if incomingData is about to overflow
+        if (incomingData.length() < 255) {
+          // Append receivedChar to incomingData
+          incomingData += receivedChar;
+        } else {
+          // Handle buffer overflow
+          Serial.println("Error: Incoming data exceeds buffer size");
+          return "Buffer Overflow";
+        }
       }
     }
-  // If no newline character is received yet, return an empty string
-    i++;
-    delay(500);
+    // Add a small delay to avoid busy-waiting
+    delay(5);
   }
-  if (verbose >0){
+  // If no newline character is received within timeout, return an empty string
+  if (verbose > 0) {
     Serial.println("Input timeout");
   }
-  return "Failed Incoming Data";
+  return "Timeout";
 }
 
 
@@ -297,16 +312,23 @@ float mag(float vector[]) {
 
 void setup() {
   Serial.begin(9600);
+
+  /*String init_awk = receiveData() ;
+  while(init_awk!="Start"){
+    Serial.println("Bad start");
+    Serial.println(init_awk);
+    init_awk = receiveData();
+  }*/
   if (verbose >0){
     Serial.println("INITIALIZING");
   }
   // Set stepper motor speeds
-  stepper1.setSpeed(10);
-  stepper1.setMaxSpeed(10);  //20000 steps/second max
-  stepper1.setAcceleration(5);
-  stepper2.setSpeed(10);
-  stepper2.setMaxSpeed(10);  //20000 steps/second max
-  stepper2.setAcceleration(5);
+  stepper1.setSpeed(100);
+  stepper1.setMaxSpeed(300);  //20000 steps/second max
+  stepper1.setAcceleration(100);
+  stepper2.setSpeed(100);
+  stepper2.setMaxSpeed(400);  //20000 steps/second max
+  stepper2.setAcceleration(100);
   stepper2.move(90);
        stepper2.runToPosition();
        stepper2.setCurrentPosition(0);
@@ -321,7 +343,16 @@ void setup() {
     ref_lat = BACKUP_LAT;
     ref_lon = BACKUP_LON;
     ref_alt = BACKUP_ALT;
+    if (verbose >0){
+      Serial.println("Set to use backup coords.");
+      Serial.print("Using GPS coordingates: ");
+      Serial.print(ref_lat); Serial.print(", ");
+      Serial.print(ref_lon); Serial.print(", ");
+      Serial.print(ref_alt); Serial.println("m");
+    }
   }
+
+
 
   //Handshake
   
@@ -336,12 +367,14 @@ void setup() {
 
 void point_motors(float lat, float lon, float alt) {
     llaToEnu(lat, lon, alt, east, north, up);
-    Serial.print("East " );
-    Serial.print(east);
-    Serial.print("  North ");
-    Serial.print(north);
-    Serial.print("  up ");
-    Serial.println(up);
+    if (verbose >0){
+      Serial.print("East " );
+      Serial.print(east);
+      Serial.print("  North ");
+      Serial.print(north);
+      Serial.print("  up ");
+      Serial.println(up);
+    }
        // Rocket Coordinates
     float yr = north;
     float xr = east;
@@ -380,37 +413,50 @@ void point_motors(float lat, float lon, float alt) {
     // Solve for angle between them
     float theta = acos((xy_op[0] * dxy[0] + xy_op[1] * dxy[1]) / (mag(xy_op) * mag(dxy)));
     
-    //Inverse cos can only give angle between 0 and 180,have to account for the negative x half of xy plane using dx indicator and adjusting:
+    //Inverse cos can only give angle between 0 and 180,have to account for the positive x half of xy plane using dx indicator and adjusting:
     //ADJUST FOLLOWING CONDITION FOR MOTOR SIGN CONVENTION -- CW+: dx<0   CCW: dx>0
     if (dx < 0) {
       theta_abs = TWO_PI - theta;
-      Serial.println("dx<0");
+      if (verbose >1){
+        Serial.println("dx<0");
+      }
     } else {
       theta_abs = theta;
-      Serial.println("dx>0");
+      if (verbose >1){
+        Serial.println("dx>0");
+      }
     }
-    Serial.print("theta_abs: ");
-    Serial.println(degrees(theta_abs));
+    if (verbose >1){
+      Serial.print("theta_abs: ");
+      Serial.println(degrees(theta_abs));
+    }
     //OPTIMIZATION FOR THETA (Finds fastest route):
     //Theta_dif will be the actual movement angle for the horizontal motor
     float theta_dif = theta_abs - old_theta;
-   Serial.print("theta_dif: ");
-   Serial.println(degrees(theta_dif));
+    if (verbose >0){
+      Serial.print("theta_dif: ");
+      Serial.println(degrees(theta_dif));
+    }
     if ((abs(theta_dif)) > PI) {
-      Serial.println("Optimizing Theta...");
+      if (verbose >2){
+        Serial.println("Optimizing Theta...");
+      }
       if (theta_dif < 0) {
         theta_dif = theta_dif + TWO_PI;
       } else {
         theta_dif = theta_dif - TWO_PI;
       }
-      Serial.print("Optimized theta_dif: ");
-      Serial.println(degrees(theta_dif));
+      if (verbose >2){
+        Serial.print("Optimized theta_dif: ");
+        Serial.println(degrees(theta_dif));
+      }
 
     }
 
     
     //------ PHI CALC ------
     // Solve for phi using arctan with mag(dxy) as horizontal triangle leg and dz as vertical leg
+    // Motor oritentaion: Add negative in front of phi calc if raising antenna is CCW for vertical motor
     float phi = atan((dz)/(mag(dxy)));
 
     //Relative to 45 degree starting point
@@ -418,15 +464,18 @@ void point_motors(float lat, float lon, float alt) {
     //phi = phi + phi_i_offset
     //If phi is positive>>
     //phi = phi - phi_I_offset
-    
+    if (verbose >0){
     Serial.print("Phi_abs: ");
     Serial.println(degrees(phi));
+    }
     
     //***90 degree max for vertical motor here:
     if (abs(phi) > HALF_PI) {
       phi = PI - abs(phi);
-      Serial.print("Phi (V2): ");
-      Serial.println(degrees(phi));
+      if (verbose >1){
+        Serial.print("Phi (V2): ");
+        Serial.println(degrees(phi));
+      }
     }
     
     //Calculate how much phi should change from previous phi
@@ -435,34 +484,39 @@ void point_motors(float lat, float lon, float alt) {
     //Update old position to be used for next loop as calculated theta from this loop
     old_theta = theta_abs;
     old_phi = phi;
-    Serial.print("Phi_dif: ");
-    Serial.println(degrees(phi_dif));
+    if (verbose >1){
+      Serial.print("Phi_dif: ");
+      Serial.println(degrees(phi_dif));
+    }
     
     //Convert angle to motor step instruction
     int MOTOR1_steps = (theta_dif / TWO_PI * STEPS_PER_REVOLUTION);
-    Serial.print("Motor 1 (Horizontal) Steps: ");
-    Serial.println(MOTOR1_steps);
+    if (verbose >0){
+      Serial.print("Motor 1 (Horizontal) Steps: ");
+      Serial.println(MOTOR1_steps);
+    }
     int MOTOR2_steps = (phi_dif / TWO_PI * STEPS_PER_REVOLUTION);
-    Serial.print("Motor 2 (Vertical) Steps: ");
-    Serial.println(MOTOR2_steps);
+    if (verbose >0){
+      Serial.print("Motor 2 (Vertical) Steps: ");
+      Serial.println(MOTOR2_steps);
+    }
     
     // Move stepper motors based on calculated angles
        stepper1.move(MOTOR1_steps);
        stepper1.runToPosition();
        stepper2.move(MOTOR2_steps);
-        if (stepper2.targetPosition() > MAX_VERT_ROT_NEG && stepper2.targetPosition() < MAX_VERT_ROT_POS){
+        if (stepper2.targetPosition() >= MAX_VERT_ROT_NEG && stepper2.targetPosition() <= MAX_VERT_ROT_POS){
             stepper2.runToPosition();
         }else{
-          Serial.print("Protection for vert steps cur pos: ");
-          Serial.print(stepper2.currentPosition());
-          Serial.print(" to pos: ");
-          Serial.println(stepper2.targetPosition());
+          if (verbose >0){
+            Serial.print("Protection for vert steps cur pos: ");
+            Serial.print(stepper2.currentPosition());
+            Serial.print(" to pos: ");
+            Serial.println(stepper2.targetPosition());
+          }
         }
        
 }
-
-
-
 
 void loop() {
       Serial.print('\x05');
@@ -470,13 +524,14 @@ void loop() {
       float lat, lon, alt;
       parseIncomingData(incomingData, lat, lon, alt);
       if (verbose >2){
-        Serial.print("incoming data from py ");
+        Serial.print("incoming data from py \"");
         Serial.print(incomingData);
-        Serial.print("Lat: ");
+        Serial.println("\"");
+        Serial.print("Parsed data- Lat: ");
         Serial.print(lat);
-        Serial.print(" long: ");
+        Serial.print(" , long: ");
         Serial.print(lon);
-        Serial.print(" alt: ");
+        Serial.print(" , alt: ");
         Serial.println(alt);
       }
       point_motors( lat, lon, alt);
